@@ -9,9 +9,9 @@ const cookieParser = require("cookie-parser");
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
-app.use(cors());
 app.use(xss());
 app.use(mongoSantize());
 

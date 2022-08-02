@@ -101,7 +101,6 @@ const authCtrl = {
   generateAccessToken: async (req, res) => {
     try {
       const rf_token = req.cookies.refreshtoken;
-      console.log(rf_token);
       if (!rf_token) return res.status(400).json({ msg: "Please Login Now" });
 
       jwt.verify(
