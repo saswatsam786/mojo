@@ -32,8 +32,6 @@ const userCtrl = {
       const { avatar, fullname, mobile, address, story, website, gender } =
         req.body;
 
-      console.log(avatar);
-
       if (!fullname)
         return res.status(400).json({ msg: "Please add your full name" });
 

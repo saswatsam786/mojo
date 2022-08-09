@@ -15,7 +15,7 @@ const EditProfile = ({ setOnEdit }) => {
   };
 
   const [userData, setUserData] = useState(initState);
-  const { fullname, mobile, address, website, story } = userData;
+  const { fullname, mobile, address, website, story, gender } = userData;
 
   const [avatar, setAvatar] = useState("");
   const { auth, theme } = useSelector((state) => state);
@@ -150,6 +150,7 @@ const EditProfile = ({ setOnEdit }) => {
             name="gender"
             id="gender"
             className="custom-select text-capitalize"
+            value={gender}
             onChange={handleInput}
           >
             <option value="male">Male</option>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import Avatar from "../Avatar";
 import { getProfileUsers } from "../../redux/actions/profileAction";
@@ -20,11 +20,11 @@ const Info = () => {
     } else {
       setUserData([]);
       dispatch(getProfileUsers({ users: profile.users, id, auth }));
+      console.log(profile.users);
       const newData = profile.users.filter((user) => user._id === id);
       setUserData(newData);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, auth, dispatch, profile.users]);
+  }, [auth, dispatch, id, profile.users]);
   let check = true;
   return (
     <div className="info">
@@ -45,7 +45,7 @@ const Info = () => {
                       Edit Profile
                     </button>
                   ) : (
-                    <FollowBtn/>
+                    <FollowBtn user={user} />
                   )}
                 </div>
 
@@ -58,10 +58,11 @@ const Info = () => {
                   </span>
                 </div>
                 <h6>
-                  {user.fullname} {user.mobile}
+                  {user.fullname}{" "}
+                  <span className="text-danger">{user.mobile}</span>
                 </h6>
                 <p className="m-0">{user.address}</p>
-                <h6>{user.email}</h6>
+                <h6 className="m-0">{user.email}</h6>
                 <a href={user.website} target="_blank" rel="noreferrer">
                   {user.website}
                 </a>
