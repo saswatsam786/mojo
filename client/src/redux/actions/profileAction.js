@@ -11,73 +11,157 @@ export const PROFILE_TYPES = {
 
 export const getProfileUsers =
   ({ users, id, auth }) =>
-  async (dispatch) => {
-    let check = false;
-    users.forEach((user) => {
-      if (user._id === id) {
-        check = true;
-      }
-    });
+    async (dispatch) => {
+      let check = false;
+      users.forEach((user) => {
+        if (user._id === id) {
+          check = true;
+        }
+      });
 
-    if (!check) {
+      if (!check) {
+        try {
+          dispatch({ type: PROFILE_TYPES.LOADING, payload: true });
+          const res = await getDataAPI(`/user/${id}`, auth.token);
+          console.log(res);
+          dispatch({ type: PROFILE_TYPES.GET_USER, payload: res.data });
+          dispatch({ type: PROFILE_TYPES.LOADING, payload: false });
+        } catch (err) {
+          dispatch({
+            type: GLOBALTYPES.ALERT,
+            payload: { error: err.response.data.msg },
+          });
+        }
+      }
+    };
+
+export const updateProfileUser =
+  ({ userData, avatar, auth }) =>
+    async (dispatch) => {
+      if (!userData.fullname) {
+        return dispatch({
+          type: GLOBALTYPES.ALERT,
+          payload: { error: "Please add your full name" },
+        });
+      }
+
+      if (userData.fullname.length > 25) {
+        return dispatch({
+          type: GLOBALTYPES.ALERT,
+          payload: { error: "Your full name too long" },
+        });
+      }
+
+      if (userData.story.length > 200) {
+        return dispatch({
+          type: GLOBALTYPES.ALERT,
+          payload: { error: "Your story is too long" },
+        });
+      }
+
       try {
-        dispatch({ type: PROFILE_TYPES.LOADING, payload: true });
-        const res = await getDataAPI(`/user/${id}`, auth.token);
+        let media;
+        dispatch({
+          type: GLOBALTYPES.ALERT,
+          payload: { loading: true },
+        });
+
+        if (avatar) media = await imageUpload([avatar]);
+
+        const res = await patchDataAPI(
+          "user",
+          {
+            ...userData,
+            avatar: avatar ? media[0].url : auth.user.avatar,
+          },
+          auth.token
+        );
+
         console.log(res);
-        dispatch({ type: PROFILE_TYPES.GET_USER, payload: res.data });
-        dispatch({ type: PROFILE_TYPES.LOADING, payload: false });
+
+        dispatch({
+          type: GLOBALTYPES.AUTH,
+          payload: {
+            ...auth,
+            user: {
+              ...auth.user,
+              ...userData,
+              avatar: avatar ? media[0].url : auth.user.avatar,
+            },
+          },
+        });
+
+        dispatch({
+          type: GLOBALTYPES.ALERT,
+          payload: { success: res.data.msg },
+        });
       } catch (err) {
         dispatch({
           type: GLOBALTYPES.ALERT,
           payload: { error: err.response.data.msg },
         });
       }
-    }
-  };
+    };
 
-export const updateProfileUser =
-  ({ userData, avatar, auth }) =>
-  async (dispatch) => {
-    if (!userData.fullname) {
-      return dispatch({
-        type: GLOBALTYPES.ALERT,
-        payload: { error: "Please add your full name" },
-      });
-    }
+export const follow =
+  ({ users, user, auth }) =>
+    async (dispatch) => {
+      let newUser;
+      if (users.every(item => item._id !== user._id)) {
+        newUser = { ...user, followers: [...user.followers, auth.user] };
+      } else {
+        users.forEach(item => {
+          if (item._id === user._id) {
+            newUser = { ...item, followers: [...item.followers, auth.user] }
+          }
+        })
+      }
 
-    if (userData.fullname.length > 25) {
-      return dispatch({
-        type: GLOBALTYPES.ALERT,
-        payload: { error: "Your full name too long" },
-      });
-    }
 
-    if (userData.story.length > 200) {
-      return dispatch({
-        type: GLOBALTYPES.ALERT,
-        payload: { error: "Your story is too long" },
-      });
-    }
 
-    try {
-      let media;
+      console.log({ newUser });
+
+      dispatch({ type: PROFILE_TYPES.FOLLOW, payload: newUser });
+
       dispatch({
-        type: GLOBALTYPES.ALERT,
-        payload: { loading: true },
-      });
-
-      if (avatar) media = await imageUpload([avatar]);
-
-      const res = await patchDataAPI(
-        "user",
-        {
-          ...userData,
-          avatar: avatar ? media[0].url : auth.user.avatar,
+        type: GLOBALTYPES.AUTH,
+        payload: {
+          ...auth,
+          user: { ...auth.user, following: [...auth.user.following, newUser] },
         },
-        auth.token
-      );
+      });
+      try {
+        await patchDataAPI(`user/${user._id}/follow`, null, auth.token)
 
-      console.log(res);
+      } catch (err) {
+        dispatch({
+          type: GLOBALTYPES.ALERT,
+          payload: { error: err.response.data.msg },
+        });
+      }
+    };
+
+export const unfollow =
+  ({ users, user, auth }) =>
+    async (dispatch) => {
+
+      let newUser
+      if (users.every(item => item._id !== user._id)) {
+        newUser = { ...user, followers: DeleteData(user.followers, auth.user._id) };
+      } else {
+        users.forEach(item => {
+          if (item._id === user._id) {
+            newUser = { ...item, followers: DeleteData(item.followers, auth.user._id) };
+          }
+        })
+      }
+
+      newUser = {
+        ...user,
+        followers: DeleteData(user.followers, auth.user._id),
+      };
+
+      dispatch({ type: PROFILE_TYPES.UNFOLLOW, payload: newUser });
 
       dispatch({
         type: GLOBALTYPES.AUTH,
@@ -85,59 +169,17 @@ export const updateProfileUser =
           ...auth,
           user: {
             ...auth.user,
-            ...userData,
-            avatar: avatar ? media[0].url : auth.user.avatar,
+            following: DeleteData(auth.user.following, newUser._id),
           },
         },
       });
+      try {
+        await patchDataAPI(`user/${user._id}/unfollow`, null, auth.token)
 
-      dispatch({
-        type: GLOBALTYPES.ALERT,
-        payload: { success: res.data.msg },
-      });
-    } catch (err) {
-      dispatch({
-        type: GLOBALTYPES.ALERT,
-        payload: { error: err.response.data.msg },
-      });
-    }
-  };
-
-export const follow =
-  ({ users, user, auth }) =>
-  async (dispatch) => {
-    let newUser = { ...user, followers: [...user.followers, auth.user] };
-    console.log(newUser);
-
-    dispatch({ type: PROFILE_TYPES.FOLLOW, payload: newUser });
-
-    dispatch({
-      type: GLOBALTYPES.AUTH,
-      payload: {
-        ...auth,
-        user: { ...auth.user, following: [...auth.user.following, newUser] },
-      },
-    });
-  };
-
-export const unfollow =
-  ({ users, user, auth }) =>
-  async (dispatch) => {
-    let newUser = {
-      ...user,
-      followers: DeleteData(user.followers, auth.user._id),
+      } catch (err) {
+        dispatch({
+          type: GLOBALTYPES.ALERT,
+          payload: { error: err.response.data.msg },
+        });
+      }
     };
-
-    dispatch({ type: PROFILE_TYPES.UNFOLLOW, payload: newUser });
-
-    dispatch({
-      type: GLOBALTYPES.AUTH,
-      payload: {
-        ...auth,
-        user: {
-          ...auth.user,
-          following: DeleteData(auth.user.following, newUser._id),
-        },
-      },
-    });
-  };
