@@ -117,8 +117,6 @@ export const follow =
         })
       }
 
-
-
       console.log({ newUser });
 
       dispatch({ type: PROFILE_TYPES.FOLLOW, payload: newUser });
