@@ -22,6 +22,7 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api", require("./routes/authRoute"));
 app.use("/api", require("./routes/userRoute"));
+app.use("/api", require("./routes/postRoute"));
 
 const URI = process.env.MONGO_DB;
 mongoose
