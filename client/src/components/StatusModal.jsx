@@ -1,10 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { GLOBALTYPES } from "../redux/actions/globaltypes";
-import { createPost } from "../redux/actions/postAction";
+import { createPost, updatePost } from "../redux/actions/postAction";
 
 const StatusModal = () => {
-  const { auth, theme } = useSelector((state) => state);
+  const { auth, theme, status } = useSelector((state) => state);
   const dispatch = useDispatch();
 
   const [content, setContent] = useState("");
@@ -82,7 +82,11 @@ const StatusModal = () => {
       });
     }
 
-    dispatch(createPost({ content, images, auth }));
+    if (status.onEdit) {
+      dispatch(updatePost({ content, images, auth, status }));
+    } else {
+      dispatch(createPost({ content, images, auth }));
+    }
 
     setContent("");
     setImages([]);
@@ -90,6 +94,13 @@ const StatusModal = () => {
 
     dispatch({ type: GLOBALTYPES.STATUS, payload: false });
   };
+
+  useEffect(() => {
+    if (status.onEdit) {
+      setContent(status.content);
+      setImages(status.images);
+    }
+  }, [status]);
 
   return (
     <div className="status_modal">
@@ -120,7 +131,13 @@ const StatusModal = () => {
             {images.map((img, index) => (
               <div key={index} id="file_img">
                 <img
-                  src={img.camera ? img.camera : URL.createObjectURL(img)}
+                  src={
+                    img.camera
+                      ? img.camera
+                      : img.url
+                      ? img.url
+                      : URL.createObjectURL(img)
+                  }
                   alt="images"
                   className="img-thumbnail "
                   style={{ filter: theme ? "invert(1)" : "invert(0)" }}
