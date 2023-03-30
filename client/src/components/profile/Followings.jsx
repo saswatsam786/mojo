@@ -16,10 +16,15 @@ const Followings = ({ users, setShowFollowings }) => {
             user={user}
             setShowFollowers={setShowFollowings}
           >
-            {auth.user._id !== user._id && <FollowBtn user={user} />}
+            {auth.user._id !== user._id && (
+              <FollowBtn user={user} />
+            )}
           </UserCard>
         ))}
-        <div className="close" onClick={() => setShowFollowings(false)}>
+        <div
+          className="close"
+          onClick={() => setShowFollowings(false)}
+        >
           &times;
         </div>
       </div>
